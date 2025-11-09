@@ -1,30 +1,41 @@
 import os
-import random
 import subprocess
-import time
+import threading
 
-STATION_NAME = "station1"
-STATION_PATH = os.path.join("C:\\Users\\Erick\\Documents\\sa-mp-radio\\static\\stations", STATION_NAME)
+# Carpeta base de estaciones (relativa)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIONS_DIR = os.path.join(BASE_DIR, "static", "stations")
 
-ICECAST_URL = f"icecast://source:hackme@localhost:8000/{STATION_NAME}"
+# Diccionario para hilos de streaming activos
+threads = {}
 
-while True:
-    songs = [f for f in os.listdir(STATION_PATH) if f.endswith(".mp3")]
-    if not songs:
-        time.sleep(5)
-        continue
-    song = random.choice(songs)
-    song_path = os.path.join(STATION_PATH, song)
+def start_stream(station_id, songs):
+    if station_id in threads:
+        return  # Ya está transmitiendo
 
-    # Ejecutar FFmpeg
-    cmd = [
-        "ffmpeg",
-        "-re",
-        "-i", song_path,
-        "-c:a", "libmp3lame",
-        "-b:a", "128k",
-        "-content_type", "audio/mpeg",
-        "-f", "mp3",
-        ICECAST_URL
-    ]
-    subprocess.run(cmd)
+    def stream():
+        while True:
+            for song in songs:
+                song_path = os.path.join(STATIONS_DIR, station_id, song) if not os.path.isabs(song) else song
+                # Usa Icecast en localhost:8000, contraseña 'hackme', nombre de la estación = station_id
+                cmd = [
+                    "ffmpeg",
+                    "-re",
+                    "-i", song_path,
+                    "-c:a", "libmp3lame",
+                    "-b:a", "128k",
+                    "-content_type", "audio/mpeg",
+                    "-f", "mp3",
+                    f"icecast://source:hackme@localhost:8000/{station_id}"
+                ]
+                subprocess.run(cmd)
+
+    t = threading.Thread(target=stream, daemon=True)
+    t.start()
+    threads[station_id] = t
+
+def stop_stream(station_id):
+    # Simplemente eliminamos el hilo activo
+    if station_id in threads:
+        # No hay forma directa de matar ffmpeg, reiniciar sería opción
+        threads.pop(station_id)

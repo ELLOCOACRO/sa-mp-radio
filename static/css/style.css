@@ -1,8 +1,0 @@
-body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-h1 { color: #333; }
-.station-card { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-audio { width: 100%; margin: 10px 0; }
-.delete-btn { color: red; margin-left: 10px; text-decoration: none; }
-form { margin: 5px 0; }
-input[type="text"], input[type="file"] { padding: 5px; }
-button { padding: 5px 10px; cursor: pointer; }
