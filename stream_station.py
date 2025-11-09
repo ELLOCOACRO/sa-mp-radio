@@ -44,7 +44,7 @@ def start_stream(station_name):
         "-b:a", "128k",
         "-content_type", "audio/mpeg",
         "-f", "mp3",
-        "icecast://source:hackme@localhost:8000/stream"
+        "icecast://source:hackme@0.0.0.0:8000/stream"
     ]
     process = subprocess.Popen(command)
     return process
@@ -55,6 +55,12 @@ def stop_stream(process):
         print("🛑 Transmisión detenida.")
 
 def get_stream_url(render_host, station_id):
+    """
+    Devuelve la URL completa del stream para la estación indicada.
+    Si existe un host de Render, usa HTTPS y el dominio público.
+    Si no, usa la dirección local para pruebas.
+    """
     if render_host:
-        return f"https://{render_host}/{station_id}"
-    return f"http://localhost:8000/{station_id}"
+        return f"https://{render_host}/stream/{station_id}"
+    else:
+        return f"http://localhost:8000/stream/{station_id}"

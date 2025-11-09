@@ -1,40 +1,44 @@
 <icecast>
-    <limits>
-        <clients>100</clients>
-        <sources>10</sources>
-        <queue-size>524288</queue-size>
-        <client-timeout>30</client-timeout>
-        <header-timeout>15</header-timeout>
-        <source-timeout>10</source-timeout>
-        <burst-size>65535</burst-size>
-    </limits>
+  <location>República Dominicana</location>
+  <admin>admin@localhost</admin>
 
-    <authentication>
-        <source-password>hackme</source-password>
-        <relay-password>hackme</relay-password>
-        <admin-user>admin</admin-user>
-        <admin-password>hackme</admin-password>
-    </authentication>
+  <limits>
+    <clients>100</clients>
+    <sources>10</sources>
+    <queue-size>524288</queue-size>
+    <client-timeout>30</client-timeout>
+    <header-timeout>15</header-timeout>
+    <source-timeout>10</source-timeout>
+    <burst-size>65535</burst-size>
+  </limits>
 
-    <hostname>localhost</hostname>
-    <listen-socket>
-        <port>8000</port>
-    </listen-socket>
+  <authentication>
+    <source-password>hackme</source-password>
+    <relay-password>hackme</relay-password>
+    <admin-user>admin</admin-user>
+    <admin-password>hackme</admin-password>
+  </authentication>
 
-    <paths>
-        <basedir>/usr/share/icecast2</basedir>
-        <logdir>/tmp</logdir>
-        <webroot>/usr/share/icecast2/web</webroot>
-        <adminroot>/usr/share/icecast2/admin</adminroot>
-        <pidfile>/tmp/icecast.pid</pidfile>
-    </paths>
+  <hostname>localhost</hostname>
 
-    <logging>
-        <accesslog>/tmp/access.log</accesslog>
-        <errorlog>/tmp/error.log</errorlog>
-        <loglevel>3</loglevel>
-        <logsize>10000</logsize>
-    </logging>
+  <listen-socket>
+    <port>8000</port>
+  </listen-socket>
 
-    <fileserve>1</fileserve>
+  <paths>
+    <basedir>/tmp</basedir>
+    <logdir>/tmp</logdir>
+    <webroot>/tmp</webroot>
+    <adminroot>/tmp</adminroot>
+    <pidfile>/tmp/icecast.pid</pidfile>
+  </paths>
+
+  <logging>
+    <accesslog>/tmp/access.log</accesslog>
+    <errorlog>/tmp/error.log</errorlog>
+    <loglevel>3</loglevel>
+    <logsize>10000</logsize>
+  </logging>
+
+  <fileserve>1</fileserve>
 </icecast>

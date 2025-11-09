@@ -30,7 +30,7 @@ def start_stream_route():
         active_streams[name] = process
         render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
         stream_url = get_stream_url(render_host, f"stream_{name}")
-        return jsonify({"message": f"Transmisión iniciada en {stream_url}", "url": stream_url})
+        return jsonify({"message": f"🎶 Transmisión iniciada en {stream_url}", "url": stream_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -43,7 +43,7 @@ def stop_stream_route():
         return jsonify({"error": "No hay transmisión activa para esta estación."}), 404
     stop_stream(process)
     del active_streams[name]
-    return jsonify({"message": f"Transmisión de '{name}' detenida."})
+    return jsonify({"message": f"🛑 Transmisión de '{name}' detenida."})
 
 @app.route("/status")
 def status():
@@ -53,4 +53,6 @@ def status():
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    port = int(os.environ.get("PORT", 10000))
+    print(f"🚀 Servidor Flask en marcha en puerto {port}")
+    app.run(host="0.0.0.0", port=port, debug=False)
