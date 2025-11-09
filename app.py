@@ -1,57 +1,46 @@
 from flask import Flask, render_template, request, redirect, url_for
 import os
-import shutil
+from stream_station import start_stream, stop_stream  # tu script de streaming
 
 app = Flask(__name__)
-BASE_PATH = os.path.join("static", "stations")
 
-def get_stations():
-    stations = {}
-    if not os.path.exists(BASE_PATH):
-        os.makedirs(BASE_PATH)
-    for folder in os.listdir(BASE_PATH):
-        path = os.path.join(BASE_PATH, folder)
-        if os.path.isdir(path):
-            stations[folder] = [f for f in os.listdir(path) if f.endswith(".mp3")]
-    return stations
+# Diccionario de estaciones con sus canciones
+stations = {
+    "station1": {
+        "name": "Estación 1",
+        "songs": [
+            "static/stations/station1/cancion1.mp3",
+            "static/stations/station1/Canserbero - Tiempos de Cambio  Letra - Lyrics.mp3",
+            "static/stations/station1/Canserbero - Y la Felicidad Qu\303\251_ [Vida].mp3"
+        ],
+        "streaming": False
+    }
+    # Puedes agregar más estaciones aquí
+}
 
-@app.route("/")
+@app.route('/')
 def index():
-    stations = get_stations()
     return render_template("index.html", stations=stations)
 
-# Crear estación
-@app.route("/add_station", methods=["POST"])
-def add_station():
-    name = request.form.get("station_name")
-    if name:
-        os.makedirs(os.path.join(BASE_PATH, name), exist_ok=True)
+@app.route('/start/<station_id>')
+def start_station(station_id):
+    if station_id in stations and not stations[station_id]["streaming"]:
+        # Inicia el streaming usando tu script
+        start_stream(station_id, stations[station_id]["songs"])
+        stations[station_id]["streaming"] = True
     return redirect(url_for('index'))
 
-# Borrar estación
-@app.route("/delete_station/<station>")
-def delete_station(station):
-    path = os.path.join(BASE_PATH, station)
-    if os.path.exists(path):
-        shutil.rmtree(path)
-    return redirect(url_for('index'))
-
-# Subir canción
-@app.route("/upload/<station>", methods=["POST"])
-def upload_song(station):
-    file = request.files.get("song_file")
-    if file and file.filename.endswith(".mp3"):
-        save_path = os.path.join(BASE_PATH, station, file.filename)
-        file.save(save_path)
-    return redirect(url_for('index'))
-
-# Borrar canción
-@app.route("/delete_song/<station>/<song>")
-def delete_song(station, song):
-    path = os.path.join(BASE_PATH, station, song)
-    if os.path.exists(path):
-        os.remove(path)
+@app.route('/stop/<station_id>')
+def stop_station(station_id):
+    if station_id in stations and stations[station_id]["streaming"]:
+        # Detiene el streaming
+        stop_stream(station_id)
+        stations[station_id]["streaming"] = False
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Detecta el puerto que Render asigna o usa 5000 por defecto
+    port = int(os.environ.get("PORT", 5000))
+    # Escucha en todas las interfaces para que Render pueda conectarse
+    app.run(host="0.0.0.0", port=port, debug=True)
+
