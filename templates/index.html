@@ -3,93 +3,76 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🎧 SA-MP Radio Station</title>
+    <title>SA-MP Radio Station</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
   </head>
   <body>
-    <header>
-      <h1>🎙️ SA-MP Radio Station Control Panel</h1>
-      <p>Administra tus estaciones y transmisiones fácilmente</p>
-    </header>
+    <div class="container">
+      <h1>🎧 SA-MP Radio Station</h1>
+      <p>Bienvenido a tu panel de control de emisoras</p>
 
-    <main>
-      <section class="create-section">
-        <h2>➕ Crear nueva estación</h2>
-        <input
-          type="text"
-          id="stationName"
-          placeholder="Nombre de la estación"
-        />
-        <button onclick="createStation()">Crear</button>
-        <p id="createMsg"></p>
-      </section>
+      <div class="buttons">
+        <button id="btnCreate">➕ Crear estación</button>
+        <button id="btnSongs">🎵 Ver canciones</button>
+        <button id="btnTrack">📻 Track Info</button>
+      </div>
 
-      <section class="stations-section">
-        <h2>📻 Estaciones actuales</h2>
-        {% if stations %}
-        <div class="station-grid">
-          {% for station in stations %}
-          <div class="station-card">
-            <h3>{{ station.name }}</h3>
-            <p>Canciones: {{ station.song_count }}</p>
-            <p>
-              <strong>Stream:</strong>
-              <a href="{{ station.stream_link }}" target="_blank"
-                >{{ station.stream_link }}</a
-              >
-            </p>
-            <button onclick="viewSongs('{{ station.name }}')">
-              Ver canciones
-            </button>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <p>No hay estaciones creadas aún.</p>
-        {% endif %}
-      </section>
+      <div class="info">
+        <p>
+          <strong>Stream Link:</strong>
+          <span id="streamLink">{{ stream_link }}</span>
+        </p>
+        <p id="status">Estado: verificando...</p>
+      </div>
 
-      <section id="songsSection" style="display: none">
-        <h2>🎵 Canciones en <span id="stationTitle"></span></h2>
-        <ul id="songList"></ul>
-      </section>
-    </main>
-
-    <footer>
-      <p>Hecho con ❤️ por Erick Mota | Flask + Icecast + Render</p>
-    </footer>
+      <div id="output"></div>
+    </div>
 
     <script>
-      async function createStation() {
-        const name = document.getElementById("stationName").value;
-        if (!name.trim()) return alert("Ingresa un nombre válido");
+      const btnCreate = document.getElementById("btnCreate");
+      const btnSongs = document.getElementById("btnSongs");
+      const btnTrack = document.getElementById("btnTrack");
+      const output = document.getElementById("output");
+      const statusEl = document.getElementById("status");
 
+      async function checkStatus() {
+        const res = await fetch("/status");
+        const data = await res.json();
+        statusEl.innerText = `Estado: ${data.status} (Puerto Icecast: ${data.icecast_port})`;
+      }
+
+      btnCreate.onclick = async () => {
+        const name = prompt("Nombre de la estación:");
+        if (!name) return;
         const res = await fetch("/create_station", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `name=${encodeURIComponent(name)}`,
         });
         const data = await res.json();
-        document.getElementById("createMsg").innerText = data.message;
-        if (data.success) location.reload();
-      }
+        output.innerText = data.message || data.error;
+      };
 
-      function viewSongs(station) {
-        fetch(`/static/stations/${station}/`)
-          .then((res) => {
-            if (!res.ok) throw new Error("No se puede acceder a las canciones");
-            document.getElementById("stationTitle").innerText = station;
-            document.getElementById("songsSection").style.display = "block";
-          })
-          .catch(() =>
-            alert(
-              "No hay canciones disponibles o no se puede acceder al directorio."
-            )
-          );
-      }
+      btnSongs.onclick = async () => {
+        const res = await fetch("/songs");
+        const data = await res.json();
+        output.innerHTML =
+          "<h3>🎶 Canciones disponibles:</h3><ul>" +
+          data.map((song) => `<li>${song}</li>`).join("") +
+          "</ul>";
+      };
+
+      btnTrack.onclick = async () => {
+        output.innerHTML = "<p>📡 Consultando track actual...</p>";
+        const res = await fetch("/status");
+        const data = await res.json();
+        output.innerHTML = `<p>🎧 Stream activo en puerto ${data.icecast_port}</p>`;
+      };
+
+      checkStatus();
     </script>
   </body>
 </html>

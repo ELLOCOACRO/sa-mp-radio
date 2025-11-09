@@ -1,70 +1,60 @@
 body {
-    font-family: "Poppins", sans-serif;
-    margin: 0;
-    background: #0a0a0a;
-    color: #fff;
-}
-
-header {
-    background: linear-gradient(90deg, #ff0057, #ff9900);
-    padding: 20px;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: "Segoe UI", sans-serif;
     text-align: center;
-}
-
-main {
     padding: 30px;
-    max-width: 900px;
-    margin: auto;
 }
 
-h1, h2 {
-    color: #ffcc00;
+.container {
+    max-width: 700px;
+    margin: auto;
+    background: #161b22;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(255,255,255,0.1);
+}
+
+h1 {
+    color: #58a6ff;
+    font-size: 28px;
+}
+
+p {
+    font-size: 16px;
+    color: #c9d1d9;
 }
 
 button {
-    background: #ff0057;
+    background: #238636;
     border: none;
     color: white;
-    padding: 10px 15px;
+    font-size: 16px;
+    padding: 10px 20px;
+    margin: 5px;
     border-radius: 8px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.3s;
 }
 
 button:hover {
-    background: #ff3366;
+    background: #2ea043;
 }
 
-.station-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
+#output {
+    margin-top: 20px;
+    text-align: left;
+    background: #0d1117;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #30363d;
 }
 
-.station-card {
-    background: #1a1a1a;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px #111;
-    transition: transform 0.2s;
+ul {
+    list-style: none;
+    padding: 0;
 }
 
-.station-card:hover {
-    transform: scale(1.03);
-}
-
-a {
-    color: #66ccff;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-footer {
-    text-align: center;
-    padding: 15px;
-    background: #111;
-    margin-top: 40px;
+ul li {
+    margin: 5px 0;
 }

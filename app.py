@@ -1,48 +1,50 @@
 import os
 from flask import Flask, render_template, jsonify, request
-from datetime import datetime
+import subprocess
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# Ruta base de estaciones
-STATIONS_DIR = os.path.join("static", "stations")
-os.makedirs(STATIONS_DIR, exist_ok=True)
+# --- Configuración base ---
+ICECAST_CONFIG = "/app/icecast.xml"
+ICECAST_PORT = 8000
+STREAM_DIR = "static/stations"
+os.makedirs(STREAM_DIR, exist_ok=True)
 
+@app.route('/')
+def index():
+    return render_template('index.html', stream_link=f"http://{request.host}:{ICECAST_PORT}/stream")
 
-@app.route("/")
-def home():
-    stations = []
-    for folder in os.listdir(STATIONS_DIR):
-        path = os.path.join(STATIONS_DIR, folder)
-        if os.path.isdir(path):
-            songs = [f for f in os.listdir(path) if f.endswith(('.mp3', '.wav'))]
-            stations.append({
-                "name": folder,
-                "song_count": len(songs),
-                "stream_link": f"https://{request.host}/static/stations/{folder}/"
-            })
-    return render_template("index.html", stations=stations)
-
-
-@app.route("/create_station", methods=["POST"])
+@app.route('/create_station', methods=['POST'])
 def create_station():
-    data = request.get_json()
-    name = data.get("name")
-    path = os.path.join(STATIONS_DIR, name)
-    if not os.path.exists(path):
-        os.makedirs(path)
-        return jsonify({"success": True, "message": f"Estación '{name}' creada."})
-    return jsonify({"success": False, "message": "La estación ya existe."})
+    name = request.form.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "Debes ingresar un nombre"}), 400
 
+    station_path = os.path.join(STREAM_DIR, name)
+    os.makedirs(station_path, exist_ok=True)
+    return jsonify({"message": f"Estación '{name}' creada correctamente."})
 
-@app.route("/status")
+@app.route('/songs')
+def songs():
+    songs_list = []
+    for root, _, files in os.walk(STREAM_DIR):
+        for file in files:
+            if file.endswith(('.mp3', '.ogg', '.wav')):
+                songs_list.append(os.path.relpath(os.path.join(root, file), STREAM_DIR))
+    return jsonify(songs_list)
+
+@app.route('/status')
 def status():
-    return jsonify({
-        "status": "ok",
-        "time": datetime.utcnow().isoformat()
-    })
-
+    # Simple status mock
+    return jsonify({"status": "online", "icecast_port": ICECAST_PORT})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    # Inicia Icecast antes del servidor Flask
+    try:
+        subprocess.Popen(["icecast2", "-c", ICECAST_CONFIG])
+        print("✅ Icecast iniciado correctamente.")
+    except Exception as e:
+        print(f"⚠️ Error al iniciar Icecast: {e}")
+
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
