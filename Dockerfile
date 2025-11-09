@@ -1,20 +1,30 @@
-# Imagen base con Python
-FROM python:3.12-slim
+# Imagen base de Python ligera
+FROM python:3.11-slim
 
-# Instala ffmpeg e icecast
-RUN apt-get update && apt-get install -y ffmpeg icecast2 && rm -rf /var/lib/apt/lists/*
+# Instala Icecast2 y FFmpeg
+RUN apt-get update && apt-get install -y icecast2 ffmpeg && apt-get clean
 
-# Carpeta de la app
+# Crea usuario no root (necesario para Icecast)
+RUN adduser --disabled-password --gecos "" iceuser
+
+# Directorio del proyecto
 WORKDIR /app
 
-# Copia todo
-COPY . /app
+# Copia los archivos del proyecto
+COPY . .
 
-# Instala dependencias
+# Instala dependencias Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expone el puerto de Flask y Icecast
-EXPOSE 5000 8000
+# Cambia permisos
+RUN chown -R iceuser:iceuser /app
 
-# Comando para correr Flask y Icecast
-CMD icecast2 -c /app/icecast.xml & python app.py
+# Cambia al usuario no root
+USER iceuser
+
+# Expone puertos (Icecast y Flask)
+EXPOSE 8000
+EXPOSE 5000
+
+# Comando para ejecutar ambos servicios
+CMD bash -c "icecast2 -b -c /app/icecast.xml & python app.py"
