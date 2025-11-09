@@ -1,0 +1,20 @@
+<icecast>
+    <limits>
+        <clients>100</clients>
+        <sources>10</sources>
+        <threadpool>5</threadpool>
+    </limits>
+
+    <authentication>
+        <source-password>hackme</source-password>
+        <admin-user>admin</admin-user>
+        <admin-password>hackme</admin-password>
+    </authentication>
+
+    <hostname>localhost</hostname>
+    <listen-socket>
+        <port>8000</port>
+    </listen-socket>
+
+    <fileserve>1</fileserve>
+</icecast>
