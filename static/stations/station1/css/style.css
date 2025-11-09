@@ -1,56 +1,70 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    color: #f1f1f1;
-    text-align: center;
+    font-family: "Poppins", sans-serif;
     margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    background: #0a0a0a;
+    color: #fff;
 }
 
 header {
-    background-color: rgba(0, 0, 0, 0.3);
-    padding: 1.5rem 0;
-}
-
-h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, #ff0057, #ff9900);
+    padding: 20px;
+    text-align: center;
 }
 
 main {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    padding: 30px;
+    max-width: 900px;
+    margin: auto;
 }
 
-.player audio {
-    width: 80%;
-    max-width: 400px;
-    margin-top: 20px;
+h1, h2 {
+    color: #ffcc00;
+}
+
+button {
+    background: #ff0057;
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #ff3366;
+}
+
+.station-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.station-card {
+    background: #1a1a1a;
+    padding: 15px;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    box-shadow: 0 0 10px #111;
+    transition: transform 0.2s;
 }
 
-.info {
-    margin-top: 2rem;
+.station-card:hover {
+    transform: scale(1.03);
 }
 
-#status {
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 1rem 2rem;
-    border-radius: 10px;
-    display: inline-block;
-    margin-top: 10px;
-    font-weight: bold;
+a {
+    color: #66ccff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 footer {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 1rem 0;
-    font-size: 0.9rem;
+    text-align: center;
+    padding: 15px;
+    background: #111;
+    margin-top: 40px;
 }

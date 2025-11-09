@@ -1,0 +1,82 @@
+<icecast>
+    <!-- 📍 INFORMACIÓN GENERAL DEL SERVIDOR -->
+    <location>Dominican Republic</location>
+    <admin>admin@sa-mp-radio.com</admin>
+    <hostname>sa-mp-radio-1.onrender.com</hostname>
+
+    <!-- 🔑 AUTENTICACIÓN -->
+    <authentication>
+        <!-- Contraseñas de administración -->
+        <admin-user>admin</admin-user>
+        <admin-password>admin123</admin-password>
+
+        <!-- Contraseñas para los transmisores (sources) -->
+        <source-password>stream123</source-password>
+
+        <!-- Contraseña para montar puntos adicionales -->
+        <relay-password>relay123</relay-password>
+    </authentication>
+
+    <!-- 🌐 PUERTOS Y CONEXIONES -->
+    <listen-socket>
+        <port>8000</port>
+        <bind-address>0.0.0.0</bind-address>
+    </listen-socket>
+
+    <!-- 💾 RUTAS Y PERMISOS (sin /var/log para evitar errores) -->
+    <paths>
+        <basedir>/usr/share/icecast2</basedir>
+        <logdir>/tmp</logdir>
+        <webroot>/usr/share/icecast2/web</webroot>
+        <adminroot>/usr/share/icecast2/admin</adminroot>
+        <pidfile>/tmp/icecast2.pid</pidfile>
+        <alias source="/" dest="/status.xsl"/>
+    </paths>
+
+    <!-- ⚙️ CONFIGURACIÓN DE LOGGING -->
+    <logging>
+        <accesslog>/tmp/access.log</accesslog>
+        <errorlog>/tmp/error.log</errorlog>
+        <playlistlog>/tmp/playlist.log</playlistlog>
+        <loglevel>3</loglevel> <!-- 4 = debug, 3 = info -->
+    </logging>
+
+    <!-- 🎧 CONFIGURACIÓN DE MOUNT POINT POR DEFECTO -->
+    <mount>
+        <mount-name>/stream</mount-name>
+        <public>1</public>
+        <max-listeners>200</max-listeners>
+        <fallback-mount>/fallback.mp3</fallback-mount>
+        <authentication type="url">
+            <option name="username" value="source"/>
+            <option name="password" value="stream123"/>
+        </authentication>
+    </mount>
+
+    <!-- 🎵 ARCHIVO DE RESPALDO SI NO HAY STREAM -->
+    <fileserve>1</fileserve>
+
+    <!-- 📡 DIRECTORIOS DE PUBLICACIÓN -->
+    <directory>
+        <yp-url-timeout>15</yp-url-timeout>
+        <yp-url>http://dir.xiph.org/cgi-bin/yp-cgi</yp-url>
+    </directory>
+
+    <!-- 🔧 LIMITES Y SEGURIDAD -->
+    <limits>
+        <clients>200</clients>
+        <sources>5</sources>
+        <threadpool>5</threadpool>
+        <queue-size>524288</queue-size>
+        <client-timeout>30</client-timeout>
+        <header-timeout>15</header-timeout>
+        <source-timeout>10</source-timeout>
+        <burst-size>65535</burst-size>
+    </limits>
+
+    <!-- 👤 USUARIO ICECAST -->
+    <changeowner>
+        <user>nobody</user>
+        <group>nogroup</group>
+    </changeowner>
+</icecast>

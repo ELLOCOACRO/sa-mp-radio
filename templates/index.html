@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SA-MP Radio Station</title>
+    <title>🎧 SA-MP Radio Station</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
@@ -11,44 +11,85 @@
   </head>
   <body>
     <header>
-      <h1>🎧 SA-MP Radio</h1>
-      <p>Transmisión en vivo desde tu servidor</p>
+      <h1>🎙️ SA-MP Radio Station Control Panel</h1>
+      <p>Administra tus estaciones y transmisiones fácilmente</p>
     </header>
 
     <main>
-      <section class="player">
-        <audio controls>
-          <source
-            src="http://{{ request.host.split(':')[0] }}:8000/stream"
-            type="audio/mpeg"
-          />
-          Tu navegador no soporta la reproducción de audio.
-        </audio>
+      <section class="create-section">
+        <h2>➕ Crear nueva estación</h2>
+        <input
+          type="text"
+          id="stationName"
+          placeholder="Nombre de la estación"
+        />
+        <button onclick="createStation()">Crear</button>
+        <p id="createMsg"></p>
       </section>
 
-      <section class="info">
-        <h2>Estado del servidor</h2>
-        <div id="status">Cargando estado...</div>
+      <section class="stations-section">
+        <h2>📻 Estaciones actuales</h2>
+        {% if stations %}
+        <div class="station-grid">
+          {% for station in stations %}
+          <div class="station-card">
+            <h3>{{ station.name }}</h3>
+            <p>Canciones: {{ station.song_count }}</p>
+            <p>
+              <strong>Stream:</strong>
+              <a href="{{ station.stream_link }}" target="_blank"
+                >{{ station.stream_link }}</a
+              >
+            </p>
+            <button onclick="viewSongs('{{ station.name }}')">
+              Ver canciones
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p>No hay estaciones creadas aún.</p>
+        {% endif %}
+      </section>
+
+      <section id="songsSection" style="display: none">
+        <h2>🎵 Canciones en <span id="stationTitle"></span></h2>
+        <ul id="songList"></ul>
       </section>
     </main>
 
     <footer>
-      <p>SA-MP Radio • Docker + Render • 2025</p>
+      <p>Hecho con ❤️ por Erick Mota | Flask + Icecast + Render</p>
     </footer>
 
     <script>
-      async function updateStatus() {
-        try {
-          const res = await fetch("/status");
-          const data = await res.json();
-          document.getElementById("status").innerText = data.message;
-        } catch (e) {
-          document.getElementById("status").innerText =
-            "Error al conectar con el servidor.";
-        }
+      async function createStation() {
+        const name = document.getElementById("stationName").value;
+        if (!name.trim()) return alert("Ingresa un nombre válido");
+
+        const res = await fetch("/create_station", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        document.getElementById("createMsg").innerText = data.message;
+        if (data.success) location.reload();
       }
-      updateStatus();
-      setInterval(updateStatus, 8000);
+
+      function viewSongs(station) {
+        fetch(`/static/stations/${station}/`)
+          .then((res) => {
+            if (!res.ok) throw new Error("No se puede acceder a las canciones");
+            document.getElementById("stationTitle").innerText = station;
+            document.getElementById("songsSection").style.display = "block";
+          })
+          .catch(() =>
+            alert(
+              "No hay canciones disponibles o no se puede acceder al directorio."
+            )
+          );
+      }
     </script>
   </body>
 </html>
