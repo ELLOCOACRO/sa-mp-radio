@@ -1,50 +1,56 @@
+from flask import Flask, render_template, request, jsonify
+from stream_station import create_station, list_stations, start_stream, stop_stream, get_stream_url
 import os
-from flask import Flask, render_template, jsonify, request
-import subprocess
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
+app = Flask(__name__)
 
-# --- Configuración base ---
-ICECAST_CONFIG = "/app/icecast.xml"
-ICECAST_PORT = 8000
-STREAM_DIR = "static/stations"
-os.makedirs(STREAM_DIR, exist_ok=True)
+# Para almacenar los procesos de transmisión activos
+active_streams = {}
 
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html', stream_link=f"http://{request.host}:{ICECAST_PORT}/stream")
+    stations = list_stations()
+    return render_template("index.html", stations=stations)
 
-@app.route('/create_station', methods=['POST'])
-def create_station():
-    name = request.form.get("name", "").strip()
+@app.route("/create_station", methods=["POST"])
+def create_station_route():
+    data = request.get_json()
+    name = data.get("name")
     if not name:
-        return jsonify({"error": "Debes ingresar un nombre"}), 400
+        return jsonify({"error": "Nombre de estación requerido"}), 400
+    path = create_station(name)
+    return jsonify({"message": f"Estación '{name}' creada exitosamente.", "path": str(path)})
 
-    station_path = os.path.join(STREAM_DIR, name)
-    os.makedirs(station_path, exist_ok=True)
-    return jsonify({"message": f"Estación '{name}' creada correctamente."})
+@app.route("/start_stream", methods=["POST"])
+def start_stream_route():
+    data = request.get_json()
+    name = data.get("name")
+    try:
+        process = start_stream(name)
+        active_streams[name] = process
+        render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+        stream_url = get_stream_url(render_host, f"stream_{name}")
+        return jsonify({"message": f"Transmisión iniciada en {stream_url}", "url": stream_url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/songs')
-def songs():
-    songs_list = []
-    for root, _, files in os.walk(STREAM_DIR):
-        for file in files:
-            if file.endswith(('.mp3', '.ogg', '.wav')):
-                songs_list.append(os.path.relpath(os.path.join(root, file), STREAM_DIR))
-    return jsonify(songs_list)
+@app.route("/stop_stream", methods=["POST"])
+def stop_stream_route():
+    data = request.get_json()
+    name = data.get("name")
+    process = active_streams.get(name)
+    if not process:
+        return jsonify({"error": "No hay transmisión activa para esta estación."}), 404
+    stop_stream(process)
+    del active_streams[name]
+    return jsonify({"message": f"Transmisión de '{name}' detenida."})
 
-@app.route('/status')
+@app.route("/status")
 def status():
-    # Simple status mock
-    return jsonify({"status": "online", "icecast_port": ICECAST_PORT})
+    return jsonify({
+        "stations": list(list_stations().keys()),
+        "active_streams": list(active_streams.keys())
+    })
 
 if __name__ == "__main__":
-    # Inicia Icecast antes del servidor Flask
-    try:
-        subprocess.Popen(["icecast2", "-c", ICECAST_CONFIG])
-        print("✅ Icecast iniciado correctamente.")
-    except Exception as e:
-        print(f"⚠️ Error al iniciar Icecast: {e}")
-
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))

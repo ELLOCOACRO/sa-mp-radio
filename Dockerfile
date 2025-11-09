@@ -1,20 +1,20 @@
-# Imagen base
+# Usa una imagen base oficial de Python
 FROM python:3.11-slim
 
-# Instalar dependencias
-RUN apt-get update && apt-get install -y icecast2 && rm -rf /var/lib/apt/lists/*
+# Instala dependencias del sistema necesarias para FFmpeg e Icecast
+RUN apt-get update && apt-get install -y ffmpeg icecast2 && apt-get clean
 
-# Crear directorio de la app
+# Crea el directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos
+# Copia los archivos de la app
 COPY . /app
 
-# Instalar dependencias de Python
+# Instala las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Exponer puertos (Flask + Icecast)
+# Exponer los puertos de Flask (10000) e Icecast (8000)
 EXPOSE 10000 8000
 
-# Comando principal
-CMD ["python", "app.py"]
+# Comando para iniciar Icecast y luego Flask
+CMD service icecast2 start && gunicorn -b 0.0.0.0:10000 app:app

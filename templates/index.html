@@ -3,76 +3,118 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SA-MP Radio Station</title>
+    <title>SA-MP Radio | Panel de Estaciones</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
+      href="{{ url_for('static', filename='style.css') }}"
     />
   </head>
   <body>
-    <div class="container">
-      <h1>🎧 SA-MP Radio Station</h1>
-      <p>Bienvenido a tu panel de control de emisoras</p>
+    <header>
+      <h1>🎵 SA-MP Radio</h1>
+      <p>Emisoras y transmisiones en directo</p>
+    </header>
 
-      <div class="buttons">
-        <button id="btnCreate">➕ Crear estación</button>
-        <button id="btnSongs">🎵 Ver canciones</button>
-        <button id="btnTrack">📻 Track Info</button>
-      </div>
+    <section class="create-station">
+      <h2>Crear nueva estación</h2>
+      <input
+        type="text"
+        id="stationName"
+        placeholder="Nombre de la estación..."
+      />
+      <button id="createStationBtn">Crear estación</button>
+      <p id="createStatus"></p>
+    </section>
 
-      <div class="info">
+    <section class="stations">
+      <h2>🎙️ Estaciones disponibles</h2>
+      {% if stations %} {% for station in stations.values() %}
+      <div class="station">
+        <h3>{{ station.name }}</h3>
         <p>
-          <strong>Stream Link:</strong>
-          <span id="streamLink">{{ stream_link }}</span>
+          <strong>Canciones:</strong> {{ station.songs|join(', ') if
+          station.songs else 'Sin canciones aún.' }}
         </p>
-        <p id="status">Estado: verificando...</p>
+        <button class="start-btn" onclick="startStream('{{ station.name }}')">
+          Iniciar transmisión
+        </button>
+        <button class="stop-btn" onclick="stopStream('{{ station.name }}')">
+          Detener transmisión
+        </button>
+        <audio
+          id="player-{{ station.name }}"
+          controls
+          style="display: none; margin-top: 10px"
+        ></audio>
+        <p id="status-{{ station.name }}" class="status"></p>
       </div>
+      {% endfor %} {% else %}
+      <p>No hay estaciones creadas todavía.</p>
+      {% endif %}
+    </section>
 
-      <div id="output"></div>
-    </div>
+    <footer>
+      <p>Desarrollado por Erick ⚡ | Proyecto Flask + Icecast</p>
+    </footer>
 
     <script>
-      const btnCreate = document.getElementById("btnCreate");
-      const btnSongs = document.getElementById("btnSongs");
-      const btnTrack = document.getElementById("btnTrack");
-      const output = document.getElementById("output");
-      const statusEl = document.getElementById("status");
+      // Crear estación
+      document
+        .getElementById("createStationBtn")
+        .addEventListener("click", async () => {
+          const name = document.getElementById("stationName").value.trim();
+          const status = document.getElementById("createStatus");
+          if (!name) {
+            status.textContent = "⚠️ Debes ingresar un nombre.";
+            return;
+          }
+          status.textContent = "⏳ Creando estación...";
+          const res = await fetch("/create_station", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          const data = await res.json();
+          status.textContent = data.message || data.error;
+          if (!data.error) setTimeout(() => location.reload(), 1500);
+        });
 
-      async function checkStatus() {
-        const res = await fetch("/status");
-        const data = await res.json();
-        statusEl.innerText = `Estado: ${data.status} (Puerto Icecast: ${data.icecast_port})`;
-      }
-
-      btnCreate.onclick = async () => {
-        const name = prompt("Nombre de la estación:");
-        if (!name) return;
-        const res = await fetch("/create_station", {
+      // Iniciar transmisión
+      async function startStream(name) {
+        const status = document.getElementById(`status-${name}`);
+        status.textContent = "🔄 Iniciando transmisión...";
+        const res = await fetch("/start_stream", {
           method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `name=${encodeURIComponent(name)}`,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
         });
         const data = await res.json();
-        output.innerText = data.message || data.error;
-      };
+        if (data.error) {
+          status.textContent = "❌ " + data.error;
+        } else {
+          status.textContent = "✅ " + data.message;
+          const audio = document.getElementById(`player-${name}`);
+          audio.src = data.url;
+          audio.style.display = "block";
+          audio.play();
+        }
+      }
 
-      btnSongs.onclick = async () => {
-        const res = await fetch("/songs");
+      // Detener transmisión
+      async function stopStream(name) {
+        const status = document.getElementById(`status-${name}`);
+        status.textContent = "🛑 Deteniendo transmisión...";
+        const res = await fetch("/stop_stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
         const data = await res.json();
-        output.innerHTML =
-          "<h3>🎶 Canciones disponibles:</h3><ul>" +
-          data.map((song) => `<li>${song}</li>`).join("") +
-          "</ul>";
-      };
-
-      btnTrack.onclick = async () => {
-        output.innerHTML = "<p>📡 Consultando track actual...</p>";
-        const res = await fetch("/status");
-        const data = await res.json();
-        output.innerHTML = `<p>🎧 Stream activo en puerto ${data.icecast_port}</p>`;
-      };
-
-      checkStatus();
+        status.textContent = data.message || data.error;
+        const audio = document.getElementById(`player-${name}`);
+        audio.pause();
+        audio.style.display = "none";
+      }
     </script>
   </body>
 </html>

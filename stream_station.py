@@ -1,41 +1,60 @@
 import os
 import subprocess
-import threading
+from pathlib import Path
 
-# Carpeta base de estaciones (relativa)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIONS_DIR = os.path.join(BASE_DIR, "static", "stations")
+STATIONS_DIR = Path("static/stations")
+STATIONS_DIR.mkdir(parents=True, exist_ok=True)
+ICECAST_CONFIG = Path("icecast.xml")
 
-# Diccionario para hilos de streaming activos
-threads = {}
+def create_station(name):
+    station_path = STATIONS_DIR / name
+    if not station_path.exists():
+        station_path.mkdir(parents=True)
+    return station_path
 
-def start_stream(station_id, songs):
-    if station_id in threads:
-        return  # Ya está transmitiendo
+def list_stations():
+    stations = {}
+    for i, folder in enumerate(STATIONS_DIR.iterdir()):
+        if folder.is_dir():
+            songs = [f.name for f in folder.glob("*.mp3")]
+            stations[i] = {
+                "name": folder.name,
+                "songs": songs,
+                "path": str(folder),
+                "streaming": False
+            }
+    return stations
 
-    def stream():
-        while True:
-            for song in songs:
-                song_path = os.path.join(STATIONS_DIR, station_id, song) if not os.path.isabs(song) else song
-                # Usa Icecast en localhost:8000, contraseña 'hackme', nombre de la estación = station_id
-                cmd = [
-                    "ffmpeg",
-                    "-re",
-                    "-i", song_path,
-                    "-c:a", "libmp3lame",
-                    "-b:a", "128k",
-                    "-content_type", "audio/mpeg",
-                    "-f", "mp3",
-                    f"icecast://source:hackme@localhost:8000/{station_id}"
-                ]
-                subprocess.run(cmd)
+def start_stream(station_name):
+    station_path = STATIONS_DIR / station_name
+    if not station_path.exists():
+        raise FileNotFoundError("La estación no existe.")
 
-    t = threading.Thread(target=stream, daemon=True)
-    t.start()
-    threads[station_id] = t
+    mp3_files = list(station_path.glob("*.mp3"))
+    if not mp3_files:
+        raise FileNotFoundError("No hay canciones en esta estación.")
 
-def stop_stream(station_id):
-    # Simplemente eliminamos el hilo activo
-    if station_id in threads:
-        # No hay forma directa de matar ffmpeg, reiniciar sería opción
-        threads.pop(station_id)
+    song = mp3_files[0]
+    print(f"🎧 Transmitiendo: {song.name}")
+
+    command = [
+        "ffmpeg", "-re",
+        "-i", str(song),
+        "-acodec", "libmp3lame",
+        "-b:a", "128k",
+        "-content_type", "audio/mpeg",
+        "-f", "mp3",
+        "icecast://source:hackme@localhost:8000/stream"
+    ]
+    process = subprocess.Popen(command)
+    return process
+
+def stop_stream(process):
+    if process and process.poll() is None:
+        process.terminate()
+        print("🛑 Transmisión detenida.")
+
+def get_stream_url(render_host, station_id):
+    if render_host:
+        return f"https://{render_host}/{station_id}"
+    return f"http://localhost:8000/{station_id}"

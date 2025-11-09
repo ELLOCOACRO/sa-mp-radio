@@ -1,0 +1,124 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background: #0f172a;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background: #1e293b;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #334155;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2em;
+    color: #38bdf8;
+}
+
+header p {
+    color: #94a3b8;
+}
+
+section {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+
+.create-station {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 6px #0003;
+}
+
+.create-station input {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    width: 60%;
+    margin-right: 10px;
+}
+
+.create-station button {
+    padding: 10px 15px;
+    border: none;
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.create-station button:hover {
+    background: #0ea5e9;
+}
+
+.station {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px #0003;
+}
+
+.station h3 {
+    margin: 0 0 10px 0;
+    color: #facc15;
+}
+
+.station p {
+    color: #cbd5e1;
+    margin: 5px 0;
+}
+
+button.start-btn, button.stop-btn {
+    margin-right: 10px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button.start-btn {
+    background: #22c55e;
+    color: #fff;
+}
+
+button.start-btn:hover {
+    background: #16a34a;
+}
+
+button.stop-btn {
+    background: #ef4444;
+    color: #fff;
+}
+
+button.stop-btn:hover {
+    background: #dc2626;
+}
+
+.status {
+    font-size: 0.9em;
+    color: #93c5fd;
+    margin-top: 8px;
+}
+
+footer {
+    margin-top: auto;
+    text-align: center;
+    background: #1e293b;
+    padding: 10px;
+    color: #94a3b8;
+    border-top: 2px solid #334155;
+}
