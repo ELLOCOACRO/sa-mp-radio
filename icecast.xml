@@ -17,7 +17,8 @@
         <admin-password>hackme</admin-password>
     </authentication>
 
-    <hostname>localhost</hostname>
+    <!-- Host configurado correctamente -->
+    <hostname>0.0.0.0</hostname>
 
     <listen-socket>
         <port>8000</port>
