@@ -1,56 +1,85 @@
 <icecast>
-  <location>Server</location>
-  <admin>admin@example.com</admin>
+    <!--
+      Archivo de configuración de Icecast2
+      Adaptado para Docker + Flask (no ejecuta como root)
+      Autor: ChatGPT (GPT-5)
+    -->
 
-  <limits>
-    <clients>512</clients>
-    <sources>128</sources>
-    <threadpool>10</threadpool>
-    <queue-size>524288</queue-size>
-    <client-timeout>30</client-timeout>
-    <header-timeout>15</header-timeout>
-    <source-timeout>10</source-timeout>
-    <burst-on-connect>1</burst-on-connect>
-    <burst-size>65535</burst-size>
-  </limits>
+    <!-- Información general -->
+    <location>Dominican Republic</location>
+    <admin>admin@example.com</admin>
 
-  <authentication>
-    <source-password>sourcepassword</source-password>
-    <relay-password>relaypassword</relay-password>
-    <admin-user>admin</admin-user>
-    <admin-password>adminpassword</admin-password>
-  </authentication>
+    <!-- IMPORTANTE: ejecuta Icecast como usuario sin privilegios -->
+    <changeowner>
+        <user>icecast2</user>
+        <group>icecast2</group>
+    </changeowner>
 
-<icecast>
-  ...
-  <hostname>127.0.0.1</hostname>
+    <!-- Hostname usado en logs y clientes -->
+    <hostname>127.0.0.1</hostname>
 
-  <listen-socket>
-    <port>8000</port>
-    <bind-address>127.0.0.1</bind-address>
-  </listen-socket>
-  ...
-</icecast>
+    <!-- Puertos y direcciones de escucha -->
+    <listen-socket>
+        <port>8000</port>
+        <bind-address>127.0.0.1</bind-address>
+    </listen-socket>
 
+    <!-- Directorios internos -->
+    <paths>
+        <basedir>/usr/share/icecast2</basedir>
+        <logdir>/var/log/icecast2</logdir>
+        <webroot>/usr/share/icecast2/web</webroot>
+        <adminroot>/usr/share/icecast2/admin</adminroot>
+        <pidfile>/var/run/icecast2/icecast.pid</pidfile>
+        <alias source="/" dest="/status.xsl"/>
+    </paths>
 
-  <fileserve>1</fileserve>
+    <!-- Log y niveles -->
+    <logging>
+        <accesslog>access.log</accesslog>
+        <errorlog>error.log</errorlog>
+        <playlistlog>playlist.log</playlistlog>
+        <loglevel>3</loglevel> <!-- 4=debug, 3=info, 2=warn, 1=error -->
+        <logsize>10000</logsize>
+    </logging>
 
-  <paths>
-    <basedir>/usr/share/icecast2</basedir>
-    <logdir>/var/log/icecast2</logdir>
-    <pidfile>/run/icecast2/icecast.pid</pidfile>
-    <webroot>/usr/share/icecast2/web</webroot>
-    <adminroot>/usr/share/icecast2/admin</adminroot>
-  </paths>
+    <!-- Contraseñas (modifica las tuyas aquí) -->
+    <authentication>
+        <!-- Para los procesos de subida (FFmpeg) -->
+        <source-password>sourcepassword</source-password>
 
-  <logging>
-    <accesslog>access.log</accesslog>
-    <errorlog>error.log</errorlog>
-    <loglevel>3</loglevel>
-    <logsize>10000</logsize>
-  </logging>
+        <!-- Para relay y administración -->
+        <relay-password>relaypassword</relay-password>
+        <admin-user>admin</admin-user>
+        <admin-password>adminpassword</admin-password>
+    </authentication>
 
-  <security>
-    <chroot>0</chroot>
-  </security>
+    <!-- Restricciones y seguridad -->
+    <security>
+        <chroot>0</chroot>
+        <changeowner>
+            <user>icecast2</user>
+            <group>icecast2</group>
+        </changeowner>
+        <allow-ip>127.0.0.1</allow-ip>
+    </security>
+
+    <!-- Configuración de clientes -->
+    <limits>
+        <clients>100</clients>
+        <sources>10</sources>
+        <queue-size>524288</queue-size>
+        <client-timeout>30</client-timeout>
+        <header-timeout>15</header-timeout>
+        <source-timeout>10</source-timeout>
+        <burst-on-connect>1</burst-on-connect>
+        <burst-size>65535</burst-size>
+    </limits>
+
+    <!-- Formato de listas públicas (no necesario si usas Flask proxy) -->
+    <directory>
+        <yp-url-timeout>15</yp-url-timeout>
+        <yp-url>http://dir.xiph.org/cgi-bin/yp-cgi</yp-url>
+    </directory>
+
 </icecast>
