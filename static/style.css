@@ -1,124 +1,152 @@
+/* === Estilo general === */
 body {
-    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1c1f26, #272b33);
+    font-family: "Poppins", sans-serif;
+    color: #fff;
     margin: 0;
-    background: #0f172a;
-    color: #f8fafc;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-header {
-    background: #1e293b;
-    padding: 20px;
+    padding: 0;
     text-align: center;
-    border-bottom: 2px solid #334155;
 }
 
-header h1 {
-    margin: 0;
-    font-size: 2em;
-    color: #38bdf8;
+/* === Encabezado === */
+h1 {
+    margin-top: 30px;
+    font-size: 2.2em;
+    color: #00d8ff;
+    text-shadow: 0 0 10px #00d8ff, 0 0 25px #007bff;
 }
 
-header p {
-    color: #94a3b8;
-}
-
-section {
-    padding: 20px;
-    max-width: 800px;
-    margin: auto;
-}
-
-.create-station {
-    background: #1e293b;
-    padding: 15px;
+/* === Sección de creación de estación === */
+#create {
+    margin: 30px auto;
+    background: #2f343f;
     border-radius: 10px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 6px #0003;
-}
-
-.create-station input {
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
+    padding: 20px;
     width: 60%;
-    margin-right: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
 }
 
-.create-station button {
-    padding: 10px 15px;
-    border: none;
-    background: #38bdf8;
-    color: #0f172a;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.create-station button:hover {
-    background: #0ea5e9;
-}
-
-.station {
-    background: #1e293b;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 6px #0003;
-}
-
-.station h3 {
-    margin: 0 0 10px 0;
-    color: #facc15;
-}
-
-.station p {
-    color: #cbd5e1;
-    margin: 5px 0;
-}
-
-button.start-btn, button.stop-btn {
-    margin-right: 10px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-button.start-btn {
-    background: #22c55e;
-    color: #fff;
-}
-
-button.start-btn:hover {
-    background: #16a34a;
-}
-
-button.stop-btn {
-    background: #ef4444;
-    color: #fff;
-}
-
-button.stop-btn:hover {
-    background: #dc2626;
-}
-
-.status {
-    font-size: 0.9em;
-    color: #93c5fd;
-    margin-top: 8px;
-}
-
-footer {
-    margin-top: auto;
-    text-align: center;
-    background: #1e293b;
+#create input {
     padding: 10px;
-    color: #94a3b8;
-    border-top: 2px solid #334155;
+    border: none;
+    border-radius: 5px;
+    width: 60%;
+    font-size: 1em;
+    outline: none;
+}
+
+#create button {
+    background: #00d8ff;
+    color: #111;
+    font-weight: bold;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: 0.3s;
+}
+
+#create button:hover {
+    background: #00a6c4;
+    color: #fff;
+}
+
+/* === Contenedor de estaciones === */
+#stations {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+    padding: 20px;
+}
+
+/* === Tarjetas de estación === */
+.station {
+    background: #2a2e37;
+    border-radius: 15px;
+    padding: 20px;
+    width: 280px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.station:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 25px rgba(0, 216, 255, 0.6);
+}
+
+.station h2 {
+    font-size: 1.4em;
+    margin-bottom: 10px;
+    color: #00d8ff;
+}
+
+.station ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    max-height: 120px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+}
+
+.station ul li {
+    padding: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9em;
+}
+
+/* === Botones de control === */
+.station button {
+    margin: 8px 5px 0;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: 0.3s;
+}
+
+.station button:first-of-type {
+    background: #00d8ff;
+    color: #111;
+}
+
+.station button:first-of-type:hover {
+    background: #00a6c4;
+    color: #fff;
+}
+
+.station button:last-of-type {
+    background: #ff5050;
+    color: #fff;
+}
+
+.station button:last-of-type:hover {
+    background: #ff1e1e;
+}
+
+/* === Scroll personalizado === */
+.station ul::-webkit-scrollbar {
+    width: 6px;
+}
+.station ul::-webkit-scrollbar-thumb {
+    background: #00d8ff;
+    border-radius: 10px;
+}
+.station ul::-webkit-scrollbar-track {
+    background: #1f232b;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    #create {
+        width: 90%;
+    }
+    .station {
+        width: 90%;
+    }
 }

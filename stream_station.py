@@ -2,65 +2,57 @@ import os
 import subprocess
 from pathlib import Path
 
-STATIONS_DIR = Path("static/stations")
-STATIONS_DIR.mkdir(parents=True, exist_ok=True)
-ICECAST_CONFIG = Path("icecast.xml")
+BASE_DIR = Path("static/stations")
+ICECAST_HOST = "0.0.0.0"
+ICECAST_PORT = 8000
+ICECAST_PASS = "hackme"
 
 def create_station(name):
-    station_path = STATIONS_DIR / name
-    if not station_path.exists():
-        station_path.mkdir(parents=True)
-    return station_path
+    """Crea una carpeta para una estación."""
+    station_dir = BASE_DIR / name
+    station_dir.mkdir(parents=True, exist_ok=True)
+    return station_dir
 
 def list_stations():
+    """Lista todas las estaciones disponibles y sus canciones."""
     stations = {}
-    for i, folder in enumerate(STATIONS_DIR.iterdir()):
-        if folder.is_dir():
-            songs = [f.name for f in folder.glob("*.mp3")]
-            stations[i] = {
-                "name": folder.name,
-                "songs": songs,
-                "path": str(folder),
-                "streaming": False
-            }
+    BASE_DIR.mkdir(exist_ok=True)
+    for station in BASE_DIR.iterdir():
+        if station.is_dir():
+            songs = [f.name for f in station.iterdir() if f.suffix in [".mp3", ".wav"]]
+            stations[station.name] = songs
     return stations
 
-def start_stream(station_name):
-    station_path = STATIONS_DIR / station_name
+def start_stream(name):
+    """Inicia una transmisión continua de todas las canciones en la estación."""
+    station_path = BASE_DIR / name
     if not station_path.exists():
-        raise FileNotFoundError("La estación no existe.")
+        raise Exception(f"La estación '{name}' no existe.")
 
-    mp3_files = list(station_path.glob("*.mp3"))
-    if not mp3_files:
-        raise FileNotFoundError("No hay canciones en esta estación.")
+    playlist = [str(station_path / s) for s in os.listdir(station_path) if s.endswith((".mp3", ".wav"))]
+    if not playlist:
+        raise Exception(f"No hay canciones en la estación '{name}'.")
 
-    song = mp3_files[0]
-    print(f"🎧 Transmitiendo: {song.name}")
-
-    command = [
-        "ffmpeg", "-re",
-        "-i", str(song),
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-re",
+        "-stream_loop", "-1",
+        "-i", f"concat:{'|'.join(playlist)}",
         "-acodec", "libmp3lame",
         "-b:a", "128k",
         "-content_type", "audio/mpeg",
         "-f", "mp3",
-        "icecast://source:hackme@0.0.0.0:8000/stream"
+        f"icecast://source:{ICECAST_PASS}@{ICECAST_HOST}:{ICECAST_PORT}/stream_{name}"
     ]
-    process = subprocess.Popen(command)
-    return process
+    return subprocess.Popen(ffmpeg_cmd)
 
 def stop_stream(process):
-    if process and process.poll() is None:
+    """Detiene un proceso de transmisión."""
+    if process:
         process.terminate()
-        print("🛑 Transmisión detenida.")
 
 def get_stream_url(render_host, station_id):
-    """
-    Devuelve la URL completa del stream para la estación indicada.
-    Si existe un host de Render, usa HTTPS y el dominio público.
-    Si no, usa la dirección local para pruebas.
-    """
+    """Devuelve la URL pública del stream."""
     if render_host:
-        return f"https://{render_host}/stream/{station_id}"
-    else:
-        return f"http://localhost:8000/stream/{station_id}"
+        return f"https://{render_host}/{station_id}"
+    return f"http://localhost:8000/{station_id}"

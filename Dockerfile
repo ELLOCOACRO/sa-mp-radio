@@ -1,18 +1,45 @@
 FROM python:3.11-slim
 
-WORKDIR /app
-COPY . /app
+# Instalamos dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    icecast2 \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && \
-    apt-get install -y ffmpeg icecast2 && \
-    touch /etc/mime.types && \
-    groupadd -r radio && useradd -r -g radio radio && \
-    mkdir -p /tmp && \
-    chown -R radio:radio /app /tmp && \
-    pip install --no-cache-dir -r requirements.txt
-
+# Creamos usuario no-root
+RUN useradd -m radio
 USER radio
 
-EXPOSE 10000
+WORKDIR /app
 
-CMD icecast2 -c /app/icecast.xml & gunicorn --bind 0.0.0.0:$PORT app:app
+# Copiamos archivos del proyecto
+COPY . /app
+
+# Instalamos dependencias de Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Creamos logs y configuración de supervisor
+RUN mkdir -p /home/radio/logs
+
+COPY <<EOF /etc/supervisor/conf.d/supervisord.conf
+[supervisord]
+nodaemon=true
+
+[program:icecast]
+command=icecast2 -c /app/icecast.xml
+autostart=true
+autorestart=true
+stdout_logfile=/home/radio/logs/icecast.out.log
+stderr_logfile=/home/radio/logs/icecast.err.log
+
+[program:flask]
+command=gunicorn -w 2 -b 0.0.0.0:10000 app:app
+autostart=true
+autorestart=true
+stdout_logfile=/home/radio/logs/flask.out.log
+stderr_logfile=/home/radio/logs/flask.err.log
+EOF
+
+EXPOSE 8000 10000
+CMD ["/usr/bin/supervisord"]

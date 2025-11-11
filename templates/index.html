@@ -2,73 +2,71 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SA-MP Radio 🎧</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: #0f172a;
-        color: white;
-        text-align: center;
-        padding: 40px;
-      }
-      h1 {
-        color: #38bdf8;
-      }
-      input,
-      button {
-        margin: 10px;
-        padding: 10px;
-        border-radius: 8px;
-        border: none;
-        font-size: 1em;
-      }
-      button {
-        background: #16a34a;
-        color: white;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #22c55e;
-      }
-      audio {
-        margin-top: 20px;
-        width: 80%;
-      }
-    </style>
+    <title>🎧 SA:MP Radio Manager</title>
+    <link rel="stylesheet" href="/static/style.css" />
   </head>
   <body>
-    <h1>🎵 SA-MP Radio</h1>
-    <p>Sube un archivo MP3 y presiona “Iniciar transmisión”</p>
+    <h1>📻 Panel de Radio SA:MP</h1>
 
-    <form id="uploadForm">
-      <input type="file" name="file" accept=".mp3" required />
-      <button type="submit">Iniciar transmisión</button>
-    </form>
+    <section id="create">
+      <input
+        type="text"
+        id="stationName"
+        placeholder="Nombre de nueva estación"
+      />
+      <button onclick="createStation()">➕ Crear Estación</button>
+    </section>
 
-    <audio id="player" controls>
-      <source src="{{ stream_url }}" type="audio/mpeg" />
-      Tu navegador no soporta el elemento de audio.
-    </audio>
+    <section id="stations">
+      {% for name, songs in stations.items() %}
+      <div class="station">
+        <h2>{{ name }}</h2>
+        <ul>
+          {% for song in songs %}
+          <li>{{ song }}</li>
+          {% endfor %}
+        </ul>
+        <button onclick="startStream('{{ name }}')">
+          ▶ Iniciar Transmisión
+        </button>
+        <button onclick="stopStream('{{ name }}')">⏹ Detener</button>
+      </div>
+      {% endfor %}
+    </section>
 
     <script>
-      const form = document.getElementById("uploadForm");
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const file = e.target.file.files[0];
-        if (!file) return alert("Selecciona un archivo MP3 primero.");
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const res = await fetch("/start", { method: "POST", body: formData });
+      async function createStation() {
+        const name = document.getElementById("stationName").value;
+        if (!name) return alert("Ponle un nombre a la estación.");
+        const res = await fetch("/create_station", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
         const data = await res.json();
-        if (data.error) {
-          alert("Error: " + data.error);
-        } else {
-          alert(data.message);
-          document.getElementById("player").play();
-        }
-      });
+        alert(data.message || data.error);
+        location.reload();
+      }
+
+      async function startStream(name) {
+        const res = await fetch("/start_stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+      }
+
+      async function stopStream(name) {
+        const res = await fetch("/stop_stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+      }
     </script>
   </body>
 </html>
