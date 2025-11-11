@@ -18,6 +18,7 @@
     </authentication>
 
     <hostname>localhost</hostname>
+
     <listen-socket>
         <port>8000</port>
     </listen-socket>

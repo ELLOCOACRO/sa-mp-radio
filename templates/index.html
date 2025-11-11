@@ -3,118 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SA-MP Radio | Panel de Estaciones</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
+    <title>SA-MP Radio 🎧</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: white;
+        text-align: center;
+        padding: 40px;
+      }
+      h1 {
+        color: #38bdf8;
+      }
+      input,
+      button {
+        margin: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        font-size: 1em;
+      }
+      button {
+        background: #16a34a;
+        color: white;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #22c55e;
+      }
+      audio {
+        margin-top: 20px;
+        width: 80%;
+      }
+    </style>
   </head>
   <body>
-    <header>
-      <h1>🎵 SA-MP Radio</h1>
-      <p>Emisoras y transmisiones en directo</p>
-    </header>
+    <h1>🎵 SA-MP Radio</h1>
+    <p>Sube un archivo MP3 y presiona “Iniciar transmisión”</p>
 
-    <section class="create-station">
-      <h2>Crear nueva estación</h2>
-      <input
-        type="text"
-        id="stationName"
-        placeholder="Nombre de la estación..."
-      />
-      <button id="createStationBtn">Crear estación</button>
-      <p id="createStatus"></p>
-    </section>
+    <form id="uploadForm">
+      <input type="file" name="file" accept=".mp3" required />
+      <button type="submit">Iniciar transmisión</button>
+    </form>
 
-    <section class="stations">
-      <h2>🎙️ Estaciones disponibles</h2>
-      {% if stations %} {% for station in stations.values() %}
-      <div class="station">
-        <h3>{{ station.name }}</h3>
-        <p>
-          <strong>Canciones:</strong> {{ station.songs|join(', ') if
-          station.songs else 'Sin canciones aún.' }}
-        </p>
-        <button class="start-btn" onclick="startStream('{{ station.name }}')">
-          Iniciar transmisión
-        </button>
-        <button class="stop-btn" onclick="stopStream('{{ station.name }}')">
-          Detener transmisión
-        </button>
-        <audio
-          id="player-{{ station.name }}"
-          controls
-          style="display: none; margin-top: 10px"
-        ></audio>
-        <p id="status-{{ station.name }}" class="status"></p>
-      </div>
-      {% endfor %} {% else %}
-      <p>No hay estaciones creadas todavía.</p>
-      {% endif %}
-    </section>
-
-    <footer>
-      <p>Desarrollado por Erick ⚡ | Proyecto Flask + Icecast</p>
-    </footer>
+    <audio id="player" controls>
+      <source src="{{ stream_url }}" type="audio/mpeg" />
+      Tu navegador no soporta el elemento de audio.
+    </audio>
 
     <script>
-      // Crear estación
-      document
-        .getElementById("createStationBtn")
-        .addEventListener("click", async () => {
-          const name = document.getElementById("stationName").value.trim();
-          const status = document.getElementById("createStatus");
-          if (!name) {
-            status.textContent = "⚠️ Debes ingresar un nombre.";
-            return;
-          }
-          status.textContent = "⏳ Creando estación...";
-          const res = await fetch("/create_station", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
-          });
-          const data = await res.json();
-          status.textContent = data.message || data.error;
-          if (!data.error) setTimeout(() => location.reload(), 1500);
-        });
+      const form = document.getElementById("uploadForm");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const file = e.target.file.files[0];
+        if (!file) return alert("Selecciona un archivo MP3 primero.");
+        const formData = new FormData();
+        formData.append("file", file);
 
-      // Iniciar transmisión
-      async function startStream(name) {
-        const status = document.getElementById(`status-${name}`);
-        status.textContent = "🔄 Iniciando transmisión...";
-        const res = await fetch("/start_stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
+        const res = await fetch("/start", { method: "POST", body: formData });
         const data = await res.json();
         if (data.error) {
-          status.textContent = "❌ " + data.error;
+          alert("Error: " + data.error);
         } else {
-          status.textContent = "✅ " + data.message;
-          const audio = document.getElementById(`player-${name}`);
-          audio.src = data.url;
-          audio.style.display = "block";
-          audio.play();
+          alert(data.message);
+          document.getElementById("player").play();
         }
-      }
-
-      // Detener transmisión
-      async function stopStream(name) {
-        const status = document.getElementById(`status-${name}`);
-        status.textContent = "🛑 Deteniendo transmisión...";
-        const res = await fetch("/stop_stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
-        const data = await res.json();
-        status.textContent = data.message || data.error;
-        const audio = document.getElementById(`player-${name}`);
-        audio.pause();
-        audio.style.display = "none";
-      }
+      });
     </script>
   </body>
 </html>
