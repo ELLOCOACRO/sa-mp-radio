@@ -34,8 +34,8 @@
   </paths>
 
   <logging>
-    <accesslog>/tmp/access.log</accesslog>
-    <errorlog>/tmp/error.log</errorlog>
+    <accesslog>access.log</accesslog>
+    <errorlog>error.log</errorlog>
     <loglevel>3</loglevel>
     <logsize>10000</logsize>
   </logging>
