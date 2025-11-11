@@ -1,58 +1,57 @@
-from flask import Flask, render_template, request, jsonify
-from stream_station import create_station, list_stations, start_stream, stop_stream, get_stream_url
 import os
+import subprocess
+import requests
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 
 app = Flask(__name__)
 
-# Para almacenar los procesos de transmisión activos
-active_streams = {}
+ICECAST_HOST = "localhost"
+ICECAST_PORT = 8000
+ICECAST_PASS = "hackme"
+STREAM_NAME = "stream"
+ICECAST_URL = f"http://{ICECAST_HOST}:{ICECAST_PORT}/{STREAM_NAME}"
 
 @app.route("/")
 def index():
-    stations = list_stations()
-    return render_template("index.html", stations=stations)
+    return render_template("index.html", stream_url="/radio.mp3")
 
-@app.route("/create_station", methods=["POST"])
-def create_station_route():
-    data = request.get_json()
-    name = data.get("name")
-    if not name:
-        return jsonify({"error": "Nombre de estación requerido"}), 400
-    path = create_station(name)
-    return jsonify({"message": f"Estación '{name}' creada exitosamente.", "path": str(path)})
+@app.route("/start", methods=["POST"])
+def start_stream():
+    """Inicia la transmisión desde un archivo MP3"""
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No se subió ningún archivo"}), 400
 
-@app.route("/start_stream", methods=["POST"])
-def start_stream_route():
-    data = request.get_json()
-    name = data.get("name")
+    filepath = "/tmp/upload.mp3"
+    file.save(filepath)
+
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-re",
+        "-i", filepath,
+        "-acodec", "libmp3lame",
+        "-b:a", "128k",
+        "-content_type", "audio/mpeg",
+        "-f", "mp3",
+        f"icecast://source:{ICECAST_PASS}@{ICECAST_HOST}:{ICECAST_PORT}/{STREAM_NAME}"
+    ]
+
     try:
-        process = start_stream(name)
-        active_streams[name] = process
-        render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-        stream_url = get_stream_url(render_host, f"stream_{name}")
-        return jsonify({"message": f"🎶 Transmisión iniciada en {stream_url}", "url": stream_url})
+        subprocess.Popen(ffmpeg_cmd)
+        return jsonify({"message": "🎶 Transmisión iniciada correctamente"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/stop_stream", methods=["POST"])
-def stop_stream_route():
-    data = request.get_json()
-    name = data.get("name")
-    process = active_streams.get(name)
-    if not process:
-        return jsonify({"error": "No hay transmisión activa para esta estación."}), 404
-    stop_stream(process)
-    del active_streams[name]
-    return jsonify({"message": f"🛑 Transmisión de '{name}' detenida."})
-
-@app.route("/status")
-def status():
-    return jsonify({
-        "stations": list(list_stations().keys()),
-        "active_streams": list(active_streams.keys())
-    })
+@app.route("/radio.mp3")
+def proxy_stream():
+    """Canaliza el flujo de Icecast hacia Flask (Render-friendly)"""
+    def generate():
+        with requests.get(ICECAST_URL, stream=True) as r:
+            for chunk in r.iter_content(chunk_size=4096):
+                if chunk:
+                    yield chunk
+    return Response(stream_with_context(generate()), mimetype="audio/mpeg")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    print(f"🚀 Servidor Flask en marcha en puerto {port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port)
