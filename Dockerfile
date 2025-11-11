@@ -1,48 +1,34 @@
 FROM python:3.11-slim
 
-# Instalamos dependencias del sistema
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    icecast2 \
-    supervisor \
-    && rm -rf /var/lib/apt/lists/*
-
-# Creamos usuario no-root
-RUN useradd -m radio
-USER radio
+# Paquetes del sistema: icecast2, ffmpeg, supervisor
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    icecast2 ffmpeg supervisor ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copiamos archivos del proyecto
+# Dependencias Python
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Código y configuraciones
 COPY . /app
 
-# Instalamos dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Instala la config de Icecast en su ruta estándar
+RUN mkdir -p /etc/icecast2 && \
+    cp /app/icecast.xml /etc/icecast2/icecast.xml
 
-# Creamos logs y configuración de supervisor
-RUN mkdir -p /home/radio/logs
-
-COPY <<EOF /etc/supervisor/conf.d/supervisord.conf
-[supervisord]
-nodaemon=true
-
-[program:icecast]
-command=icecast2 -c /app/icecast.xml
-autostart=true
-autorestart=true
-stdout_logfile=/home/radio/logs/icecast.out.log
-stderr_logfile=/home/radio/logs/icecast.err.log
-
-[program:flask]
-command=gunicorn -w 2 -b 0.0.0.0:10000 app:app
-autostart=true
-autorestart=true
-stdout_logfile=/home/radio/logs/flask.out.log
-stderr_logfile=/home/radio/logs/flask.err.log
-EOF
-
-EXPOSE 8000 10000
-CMD ["/usr/bin/supervisord"]
-
+# Config de supervisor
+RUN mkdir -p /etc/supervisor/conf.d
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-CMD ["/usr/bin/supervisord"]
+
+# Permisos recomendados
+RUN chown -R root:root /etc/icecast2
+
+# Render expone 1 puerto (usaremos $PORT). No expongas 8000.
+# EXPOSE no es obligatorio en Render, pero no hace daño:
+EXPOSE 10000
+
+# Inicia supervisor en primer plano
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

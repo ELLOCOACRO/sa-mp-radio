@@ -1,51 +1,51 @@
 <icecast>
-    <limits>
-        <clients>100</clients>
-        <sources>5</sources>
-        <queue-size>524288</queue-size>
-        <client-timeout>30</client-timeout>
-        <header-timeout>15</header-timeout>
-        <source-timeout>10</source-timeout>
-        <burst-on-connect>1</burst-on-connect>
-        <burst-size>65535</burst-size>
-    </limits>
+  <location>Server</location>
+  <admin>admin@example.com</admin>
 
-    <authentication>
-        <source-password>hackme</source-password>
-        <relay-password>hackme</relay-password>
-        <admin-user>admin</admin-user>
-        <admin-password>hackme</admin-password>
-    </authentication>
+  <limits>
+    <clients>512</clients>
+    <sources>128</sources>
+    <threadpool>10</threadpool>
+    <queue-size>524288</queue-size>
+    <client-timeout>30</client-timeout>
+    <header-timeout>15</header-timeout>
+    <source-timeout>10</source-timeout>
+    <burst-on-connect>1</burst-on-connect>
+    <burst-size>65535</burst-size>
+  </limits>
 
-    <!-- Host configurado correctamente -->
-    <hostname>0.0.0.0</hostname>
+  <authentication>
+    <source-password>sourcepassword</source-password>
+    <relay-password>relaypassword</relay-password>
+    <admin-user>admin</admin-user>
+    <admin-password>adminpassword</admin-password>
+  </authentication>
 
-    <listen-socket>
-        <port>8000</port>
-    </listen-socket>
+  <!-- Escucha solo en localhost:8000 (no público) -->
+  <hostname>localhost</hostname>
+  <listen-socket>
+    <port>8000</port>
+    <bind-address>127.0.0.1</bind-address>
+  </listen-socket>
 
-    <fileserve>1</fileserve>
+  <fileserve>1</fileserve>
 
-    <paths>
-        <basedir>/usr/share/icecast2</basedir>
-        <logdir>/tmp</logdir>
-        <webroot>/usr/share/icecast2/web</webroot>
-        <adminroot>/usr/share/icecast2/admin</adminroot>
-        <pidfile>/tmp/icecast.pid</pidfile>
-    </paths>
+  <paths>
+    <basedir>/usr/share/icecast2</basedir>
+    <logdir>/var/log/icecast2</logdir>
+    <pidfile>/run/icecast2/icecast.pid</pidfile>
+    <webroot>/usr/share/icecast2/web</webroot>
+    <adminroot>/usr/share/icecast2/admin</adminroot>
+  </paths>
 
-    <logging>
-        <accesslog>/tmp/access.log</accesslog>
-        <errorlog>/tmp/error.log</errorlog>
-        <loglevel>3</loglevel>
-        <logsize>10000</logsize>
-    </logging>
+  <logging>
+    <accesslog>access.log</accesslog>
+    <errorlog>error.log</errorlog>
+    <loglevel>3</loglevel>
+    <logsize>10000</logsize>
+  </logging>
 
-    <security>
-        <chroot>0</chroot>
-        <changeowner>
-            <user>radio</user>
-            <group>radio</group>
-        </changeowner>
-    </security>
+  <security>
+    <chroot>0</chroot>
+  </security>
 </icecast>

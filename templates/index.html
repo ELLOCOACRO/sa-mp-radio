@@ -1,72 +1,123 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <meta charset="UTF-8" />
-    <title>🎧 SA:MP Radio Manager</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Multi Radio 24/7</title>
+    <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <h1>📻 Panel de Radio SA:MP</h1>
+    <main class="container">
+      <h1>Multi Radio 24/7</h1>
 
-    <section id="create">
-      <input
-        type="text"
-        id="stationName"
-        placeholder="Nombre de nueva estación"
-      />
-      <button onclick="createStation()">➕ Crear Estación</button>
-    </section>
+      <section class="card">
+        <h2>Crear estación</h2>
+        <form id="create-form">
+          <input
+            type="text"
+            id="name"
+            placeholder="Nombre de la estación (ej. Rock)"
+            required
+          />
+          <button type="submit">Crear</button>
+        </form>
+        <p class="small">
+          Cada estación genera un mount único:
+          <code>/stream/&lt;mount&gt;</code>
+        </p>
+        <pre id="create-result" class="small"></pre>
+      </section>
 
-    <section id="stations">
-      {% for name, songs in stations.items() %}
-      <div class="station">
-        <h2>{{ name }}</h2>
-        <ul>
-          {% for song in songs %}
-          <li>{{ song }}</li>
-          {% endfor %}
-        </ul>
-        <button onclick="startStream('{{ name }}')">
-          ▶ Iniciar Transmisión
-        </button>
-        <button onclick="stopStream('{{ name }}')">⏹ Detener</button>
-      </div>
-      {% endfor %}
-    </section>
+      <section class="card">
+        <h2>Estaciones</h2>
+        <div id="stations"></div>
+      </section>
+    </main>
 
     <script>
-      async function createStation() {
-        const name = document.getElementById("stationName").value;
-        if (!name) return alert("Ponle un nombre a la estación.");
-        const res = await fetch("/create_station", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
+      async function fetchStations() {
+        const res = await fetch("/api/stations");
         const data = await res.json();
-        alert(data.message || data.error);
-        location.reload();
+        const cont = document.getElementById("stations");
+        cont.innerHTML = "";
+        data.forEach((s) => {
+          const div = document.createElement("div");
+          div.className = "station";
+          div.innerHTML = `
+          <h3>${s.name} ${s.enabled ? "" : "(detenida)"}</h3>
+          <p>Mount: <code>${s.mount}</code></p>
+          <p>URL de stream: <a href="${s.public_url}" target="_blank">${
+            s.public_url
+          }</a></p>
+          <audio controls preload="none">
+            <source src="${s.public_url}" type="audio/mpeg">
+          </audio>
+          <details>
+            <summary>Subir música (mp3, wav, ogg, flac, m4a)</summary>
+            <form data-name="${
+              s.name
+            }" class="upload-form" enctype="multipart/form-data">
+              <input type="file" name="file" required />
+              <button type="submit">Subir</button>
+            </form>
+            <p class="small">Carpeta: <code>stations/${s.name}/music</code></p>
+          </details>
+          <button class="stop-btn" data-name="${
+            s.name
+          }">Detener estación</button>
+          <hr/>
+        `;
+          cont.appendChild(div);
+        });
+
+        document.querySelectorAll(".upload-form").forEach((f) => {
+          f.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = f.getAttribute("data-name");
+            const formData = new FormData(f);
+            const r = await fetch(
+              `/api/stations/${encodeURIComponent(name)}/upload`,
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+            const t = await r.text();
+            alert(t);
+          });
+        });
+
+        document.querySelectorAll(".stop-btn").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const name = btn.getAttribute("data-name");
+            if (!confirm(`Detener estación ${name}?`)) return;
+            const r = await fetch(
+              `/api/stations/${encodeURIComponent(name)}/stop`,
+              { method: "POST" }
+            );
+            if (r.ok) fetchStations();
+          });
+        });
       }
 
-      async function startStream(name) {
-        const res = await fetch("/start_stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
+      document
+        .getElementById("create-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("name").value.trim();
+          if (!name) return;
+          const res = await fetch("/api/stations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          const txt = await res.text();
+          document.getElementById("create-result").textContent = txt;
+          document.getElementById("name").value = "";
+          fetchStations();
         });
-        const data = await res.json();
-        alert(data.message || data.error);
-      }
 
-      async function stopStream(name) {
-        const res = await fetch("/stop_stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
-        const data = await res.json();
-        alert(data.message || data.error);
-      }
+      fetchStations();
     </script>
   </body>
 </html>
