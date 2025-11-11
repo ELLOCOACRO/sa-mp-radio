@@ -43,3 +43,6 @@ EOF
 
 EXPOSE 8000 10000
 CMD ["/usr/bin/supervisord"]
+
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+CMD ["/usr/bin/supervisord"]
