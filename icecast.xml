@@ -9,17 +9,6 @@
     <client-timeout>30</client-timeout>
     <header-timeout>15</header-timeout>
     <source-timeout>10</source-timeout>
-<icecast>
-  <location>República Dominicana</location>
-  <admin>admin@localhost</admin>
-
-  <limits>
-    <clients>100</clients>
-    <sources>10</sources>
-    <queue-size>524288</queue-size>
-    <client-timeout>30</client-timeout>
-    <header-timeout>15</header-timeout>
-    <source-timeout>10</source-timeout>
     <burst-size>65535</burst-size>
   </limits>
 
@@ -48,6 +37,7 @@
     <accesslog>/tmp/access.log</accesslog>
     <errorlog>/tmp/error.log</errorlog>
     <loglevel>3</loglevel>
+    <logsize>10000</logsize>
   </logging>
 
   <fileserve>1</fileserve>
