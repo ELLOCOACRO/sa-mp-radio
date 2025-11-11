@@ -19,7 +19,8 @@
     <admin-password>hackme</admin-password>
   </authentication>
 
-  <hostname>localhost</hostname>
+  <!-- Host accesible tanto en Render como localmente -->
+  <hostname>0.0.0.0</hostname>
 
   <listen-socket>
     <port>8000</port>
@@ -32,6 +33,12 @@
     <adminroot>/tmp</adminroot>
     <pidfile>/tmp/icecast.pid</pidfile>
   </paths>
+
+  <!-- Evita el error "You should not run icecast2 as root" -->
+  <changeowner>
+    <user>nobody</user>
+    <group>nogroup</group>
+  </changeowner>
 
   <logging>
     <accesslog>/tmp/access.log</accesslog>
