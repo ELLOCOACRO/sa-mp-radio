@@ -63,6 +63,7 @@ class FFmpegRunner(threading.Thread):
     def write_concat_file(self, files: List[Path]) -> Optional[Path]:
         """
         Crea un archivo de lista para el demuxer 'concat' de ffmpeg.
+        Usa rutas absolutas para evitar duplicaciones relativas.
         Devuelve la ruta al archivo o None si no hay música.
         """
         if not files:
@@ -71,18 +72,15 @@ class FFmpegRunner(threading.Thread):
         order = files[:]
         random.shuffle(order)
 
-        # Evita repetición consecutiva simple si hay >1 tema
         if len(order) > 1:
-            # reshuffle hasta que no haya iguales consecutivos
-            # (listas pequeñas tardan nada; suficiente para nuestro caso)
             while any(order[i] == order[i + 1] for i in range(len(order) - 1)):
                 random.shuffle(order)
 
         concat_path = self.music_dir / "_playlist.txt"
         with open(concat_path, "w", encoding="utf-8") as f:
             for p in order:
-                # Escapa comillas simples para el demuxer concat
-                safe = p.as_posix().replace("'", r"'\''")
+                abs_path = p.resolve().as_posix()        # ABSOLUTO
+                safe = abs_path.replace("'", r"'\''")    # escape de comillas simples
                 f.write(f"file '{safe}'\n")
         return concat_path
 
@@ -130,7 +128,6 @@ class FFmpegRunner(threading.Thread):
         while not self.stop_event.is_set():
             files = self.build_playlist()
             if not files:
-                # Sin música aún: espera y reintenta
                 time.sleep(5)
                 continue
 
@@ -142,14 +139,11 @@ class FFmpegRunner(threading.Thread):
             cmd = self.build_ffmpeg_cmd(concat_file)
             try:
                 self.proc = subprocess.Popen(cmd)
-                # Espera a que ffmpeg termine (cuando acaba la lista)
                 self.proc.wait()
             except Exception:
-                # Pequeña espera antes de reintentar
                 time.sleep(2)
             finally:
                 self.proc = None
-                # Al terminar, vuelve al while y recrea la lista aleatoria
 
 
 class StationManager:

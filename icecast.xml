@@ -21,12 +21,17 @@
     <admin-password>adminpassword</admin-password>
   </authentication>
 
-  <!-- Escucha solo en localhost:8000 (no público) -->
-  <hostname>localhost</hostname>
+<icecast>
+  ...
+  <hostname>127.0.0.1</hostname>
+
   <listen-socket>
     <port>8000</port>
     <bind-address>127.0.0.1</bind-address>
   </listen-socket>
+  ...
+</icecast>
+
 
   <fileserve>1</fileserve>
 
