@@ -1,31 +1,30 @@
-[supervisord]
-nodaemon=true
-logfile=/dev/stdout
-logfile_maxbytes=0
-pidfile=/tmp/supervisord.pid
-user=root
+FROM python:3.11-slim
 
-; -------- Flask (Gunicorn) ----------
-[program:flask]
-command=/usr/bin/env bash -lc "gunicorn -w 2 -k gthread -b 0.0.0.0:${PORT:-10000} app:app"
-directory=/app
-autostart=true
-autorestart=true
-startsecs=3
-stopasgroup=true
-killasgroup=true
-stdout_logfile=/dev/stdout
-redirect_stderr=true
-priority=10
+# Instalar Icecast, FFmpeg y Supervisor
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    icecast2 ffmpeg supervisor ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-; -------- Icecast en primer plano ----------
-[program:icecast]
-command=/usr/bin/icecast2 -c /app/icecast.xml
-directory=/app
-autostart=true
-autorestart=true
-startsecs=5
-stdout_logfile=/dev/stdout
-redirect_stderr=true
-user=icecast2
-priority=20
+WORKDIR /app
+
+# Copiar dependencias e instalarlas
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Copiar código fuente y configuraciones
+COPY . /app
+
+# Permisos correctos
+RUN chmod 755 /app && \
+    chmod 644 /app/icecast.xml
+
+# Configurar supervisor
+RUN mkdir -p /etc/supervisor/conf.d
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Exponer puerto de Flask
+EXPOSE 10000
+
+# Iniciar supervisord (que lanza Flask + Icecast)
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
