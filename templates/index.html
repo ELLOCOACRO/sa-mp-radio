@@ -2,120 +2,237 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Multi Radio 24/7</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #22d3ee;
+        --danger: #ef4444;
+        --ok: #10b981;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, Segoe UI, Roboto, Arial;
+      }
+      header {
+        padding: 24px 16px;
+        border-bottom: 1px solid #1f2937;
+      }
+      h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+      main {
+        max-width: 960px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid #1f2937;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+      }
+      .station {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .ok {
+        color: var(--ok);
+      }
+      .bad {
+        color: var(--danger);
+      }
+      input[type="text"] {
+        background: #0b1220;
+        color: var(--text);
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 10px 12px;
+        outline: none;
+      }
+      button {
+        background: #0b1220;
+        border: 1px solid #334155;
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      button.primary {
+        border-color: var(--accent);
+      }
+      button.danger {
+        border-color: var(--danger);
+      }
+      details {
+        margin-top: 8px;
+      }
+      audio {
+        width: 100%;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .pill {
+        font-size: 12px;
+        padding: 2px 8px;
+        border: 1px solid #334155;
+        border-radius: 999px;
+      }
+    </style>
   </head>
   <body>
-    <main class="container">
-      <h1>Multi Radio 24/7</h1>
+    <header><h1>Multi Radio 24/7</h1></header>
 
+    <main>
       <section class="card">
         <h2>Crear estación</h2>
-        <form id="create-form">
+        <div class="row">
           <input
+            id="newName"
             type="text"
-            id="name"
-            placeholder="Nombre de la estación (ej. Rock)"
-            required
+            placeholder="Nombre de la estación (ej. Trap)"
           />
-          <button type="submit">Crear</button>
-        </form>
-        <p class="small">
-          Cada estación genera un mount único:
-          <code>/stream/&lt;mount&gt;</code>
+          <button class="primary" onclick="createStation()">Crear</button>
+        </div>
+        <p class="muted">
+          Cada estación expone <code>/stream/&lt;mount&gt;</code>.
         </p>
-        <pre id="create-result" class="small"></pre>
+        <pre
+          id="createResult"
+          class="muted"
+          style="white-space: pre-wrap"
+        ></pre>
       </section>
 
-      <section class="card">
+      <section class="card" style="margin-top: 16px">
         <h2>Estaciones</h2>
-        <div id="stations"></div>
+        <div id="stations" class="grid"></div>
       </section>
     </main>
 
     <script>
       async function fetchStations() {
-        const res = await fetch("/api/stations");
-        const data = await res.json();
-        const cont = document.getElementById("stations");
-        cont.innerHTML = "";
-        data.forEach((s) => {
-          const div = document.createElement("div");
-          div.className = "station";
-          div.innerHTML = `
-          <h3>${s.name} ${s.enabled ? "" : "(detenida)"}</h3>
-          <p>Mount: <code>${s.mount}</code></p>
-          <p>URL de stream: <a href="${s.public_url}" target="_blank">${
-            s.public_url
-          }</a></p>
-          <audio controls preload="none">
-            <source src="${s.public_url}" type="audio/mpeg">
-          </audio>
-          <details>
-            <summary>Subir música (mp3, wav, ogg, flac, m4a)</summary>
-            <form data-name="${
-              s.name
-            }" class="upload-form" enctype="multipart/form-data">
-              <input type="file" name="file" required />
-              <button type="submit">Subir</button>
-            </form>
-            <p class="small">Carpeta: <code>stations/${s.name}/music</code></p>
-          </details>
-          <button class="stop-btn" data-name="${
-            s.name
-          }">Detener estación</button>
-          <hr/>
-        `;
-          cont.appendChild(div);
-        });
-
-        document.querySelectorAll(".upload-form").forEach((f) => {
-          f.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const name = f.getAttribute("data-name");
-            const formData = new FormData(f);
-            const r = await fetch(
-              `/api/stations/${encodeURIComponent(name)}/upload`,
-              {
-                method: "POST",
-                body: formData,
-              }
-            );
-            const t = await r.text();
-            alert(t);
-          });
-        });
-
-        document.querySelectorAll(".stop-btn").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const name = btn.getAttribute("data-name");
-            if (!confirm(`Detener estación ${name}?`)) return;
-            const r = await fetch(
-              `/api/stations/${encodeURIComponent(name)}/stop`,
-              { method: "POST" }
-            );
-            if (r.ok) fetchStations();
-          });
-        });
+        const r = await fetch("/api/stations");
+        const data = await r.json();
+        renderStations(data);
       }
 
-      document
-        .getElementById("create-form")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const name = document.getElementById("name").value.trim();
-          if (!name) return;
-          const res = await fetch("/api/stations", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
-          });
-          const txt = await res.text();
-          document.getElementById("create-result").textContent = txt;
-          document.getElementById("name").value = "";
-          fetchStations();
+      function cardHTML(s) {
+        const statusClass = s.status === "running" ? "ok" : "bad";
+        const playDisabled = s.status !== "running" ? "disabled" : "";
+        return `
+  <div class="station card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <strong>${s.name}</strong>
+      <span class="pill ${statusClass}">${s.status}</span>
+    </div>
+    <div class="muted">Mount: <code>${s.mount}</code></div>
+    <div>URL de stream: <a href="${s.stream_url}" target="_blank">${s.stream_url}</a></div>
+    <audio controls ${playDisabled} src="${s.stream_url}"></audio>
+
+    <div class="row">
+      <button onclick="startStation('${s.name}')">Iniciar</button>
+      <button onclick="stopStation('${s.name}')">Detener</button>
+      <button class="danger" onclick="deleteStation('${s.name}')">Borrar</button>
+    </div>
+
+    <details>
+      <summary>Subir música (mp3, wav, ogg, flac, m4a)</summary>
+      <input type="file" id="file-${s.name}" multiple accept=".mp3,.wav,.ogg,.flac,.m4a"/>
+      <button onclick="uploadMusic('${s.name}')">Subir</button>
+    </details>
+  </div>`;
+      }
+
+      function renderStations(list) {
+        const el = document.getElementById("stations");
+        el.innerHTML = list.map(cardHTML).join("");
+      }
+
+      async function createStation() {
+        const name = document.getElementById("newName").value.trim();
+        if (!name) {
+          alert("Escribe un nombre");
+          return;
+        }
+        const r = await fetch("/api/stations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
         });
+        const data = await r.json();
+        document.getElementById("createResult").textContent =
+          JSON.stringify(data);
+        await fetchStations();
+      }
+
+      async function startStation(name) {
+        await fetch(`/api/stations/${encodeURIComponent(name)}/start`, {
+          method: "POST",
+        });
+        setTimeout(fetchStations, 800);
+      }
+
+      async function stopStation(name) {
+        await fetch(`/api/stations/${encodeURIComponent(name)}/stop`, {
+          method: "POST",
+        });
+        setTimeout(fetchStations, 800);
+      }
+
+      async function deleteStation(name) {
+        if (!confirm(`¿Borrar estación "${name}"? Se eliminarán sus archivos.`))
+          return;
+        await fetch(`/api/stations/${encodeURIComponent(name)}`, {
+          method: "DELETE",
+        });
+        await fetchStations();
+      }
+
+      async function uploadMusic(name) {
+        const input = document.getElementById(`file-${name}`);
+        if (!input.files.length) {
+          alert("Selecciona archivos");
+          return;
+        }
+        const fd = new FormData();
+        for (const f of input.files) fd.append("file", f, f.name);
+        await fetch(`/api/stations/${encodeURIComponent(name)}/upload`, {
+          method: "POST",
+          body: fd,
+        });
+        alert(
+          "Subida completada. Si la estación está iniciada, comenzará a sonar en breve."
+        );
+      }
 
       fetchStations();
     </script>

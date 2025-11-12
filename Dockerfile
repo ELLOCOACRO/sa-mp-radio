@@ -1,30 +1,32 @@
 FROM python:3.11-slim
 
-# Instalar Icecast, FFmpeg y Supervisor
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar Icecast, FFmpeg, Supervisor
+RUN apt-get update && apt-get install -y --no-install-recommends \
     icecast2 ffmpeg supervisor ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copiar dependencias e instalarlas
+# Dependencias Python
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copiar código fuente y configuraciones
+# Código
 COPY . /app
 
-# Permisos correctos
-RUN chmod 755 /app && \
-    chmod 644 /app/icecast.xml
-
-# Configurar supervisor
+# Config de supervisor
 RUN mkdir -p /etc/supervisor/conf.d
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Exponer puerto de Flask
-EXPOSE 10000
+# Config de Icecast (sin changeowner)
+RUN mkdir -p /etc/icecast2 /tmp/icecast && chown -R nobody:nogroup /tmp/icecast
+COPY icecast.xml /etc/icecast2/icecast.xml
+RUN chown root:root /etc/icecast2/icecast.xml
 
-# Iniciar supervisord (que lanza Flask + Icecast)
-CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Puertos
+ENV PORT=10000
+EXPOSE 10000 8000
+
+CMD ["/usr/bin/supervisord","-n","-c","/etc/supervisor/conf.d/supervisord.conf"]
