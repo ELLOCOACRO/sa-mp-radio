@@ -1,26 +1,29 @@
-FROM python:3.11-slim
+# Usa una imagen base oficial de Python
+FROM python:3.10-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Actualiza e instala ffmpeg para procesar audio
+RUN apt-get update && apt-get install -y ffmpeg
+
+# Crea carpetas necesarias
+RUN mkdir -p /app /etc/supervisor/conf.d /etc/icecast2 /tmp/icecast
+
+# Copia todo el proyecto al contenedor
+COPY . /app
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    icecast2 supervisor ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+# Instala dependencias de Python
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Copia la configuración de Icecast y Supervisor
+COPY icecast.xml /etc/icecast2/icecast.xml
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY . /app
-
-# supervisor + icecast config
-RUN mkdir -p /etc/supervisor/conf.d /etc/icecast2 /tmp/icecast && \
-    touch /tmp/icecast/error.log /tmp/icecast/access.log /tmp/icecast/playlist.log && \
+# Ajusta permisos
+RUN touch /tmp/icecast/error.log /tmp/icecast/access.log /tmp/icecast/playlist.log && \
     chown -R nobody:nogroup /tmp/icecast
 
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY icecast.xml /etc/icecast2/icecast.xml
-
-# Render inyecta PORT en runtime; EXPOSE es opcional
+# Exponer el puerto Flask (Render detecta automáticamente)
 EXPOSE 10000
 
-CMD ["supervisord","-n","-c","/etc/supervisor/conf.d/supervisord.conf"]
+# Inicia ambos procesos (Flask + Icecast)
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
